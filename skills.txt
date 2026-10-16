@@ -1,0 +1,182 @@
+Codex Skills 速查表
+===================
+
+说明
+----
+- 触发命令通常可以写成 `$skill-name`，例如 `$tdd`、`$diagnose`。
+- 也可以用自然语言触发，例如“用 TDD 做这个功能”“帮我诊断这个 bug”。
+- 刚安装的第三方 skills 位于：C:\Users\Lumi\.codex\skills
+- 新安装的 skills 需要重启 Codex 后才会被自动识别和触发。
+
+
+刚安装的 29 个 mattpocock/skills
+--------------------------------
+
+1. `$caveman`
+   含义：进入超简洁沟通模式，尽量减少废话和 token 消耗，同时保留技术准确性。
+   适合：你想让我“少说点”“极简回答”“caveman mode”“be brief”。
+
+2. `$design-an-interface`
+   含义：为模块或 API 生成多种差异很大的接口设计方案，并进行比较。
+   适合：你想设计 API、模块边界、接口形状，或想“多设计几版”。
+
+3. `$diagnose`
+   含义：按“复现 -> 最小化 -> 假设 -> 加仪表 -> 修复 -> 回归测试”的流程诊断问题。
+   适合：bug、性能退化、测试失败、报错、行为异常等需要严谨排查的场景。
+
+4. `$edit-article`
+   含义：编辑文章草稿，改善结构、表达清晰度和文字紧凑度。
+   适合：你有一篇文章、文档、草稿，希望我帮你改写或润色。
+
+5. `$git-guardrails-claude-code`
+   含义：为 Claude Code 设置 git 安全 hooks，阻止危险 git 命令。
+   适合：你想防止误执行 `git push`、`git reset --hard`、`git clean`、强删分支等操作。
+   注意：这是面向 Claude Code hooks 的 skill，不一定适用于 Codex 当前运行环境。
+
+6. `$grill-me`
+   含义：用连续追问的方式拷问你的方案、设计或计划，直到关键分支和假设都讲清楚。
+   适合：你想压力测试自己的技术方案、产品计划或架构设计。
+
+7. `$grill-with-docs`
+   含义：结合项目已有文档、领域模型、ADR 等内容，对方案进行追问和校准。
+   适合：你想把方案和项目现有术语、上下文、架构决策对齐。
+
+8. `$handoff`
+   含义：把当前对话压缩成一份交接文档，方便另一个 agent 或未来的你继续工作。
+   适合：长对话结束前、切换 agent 前、需要保存当前上下文时。
+
+9. `$improve-codebase-architecture`
+   含义：寻找代码库中可以改善架构、降低耦合、提升可测试性和可维护性的机会。
+   适合：你想做架构改进、模块重组、边界梳理、技术债分析。
+
+10. `$migrate-to-shoehorn`
+    含义：把测试文件中的 `as` 类型断言迁移到 `@total-typescript/shoehorn`。
+    适合：TypeScript 测试代码中需要替换 `as`，或需要构造部分测试数据。
+
+11. `$obsidian-vault`
+    含义：搜索、创建和管理 Obsidian vault 中的笔记，并使用 wikilinks 和索引笔记。
+    适合：你想让 Codex 帮你整理 Obsidian 知识库。
+
+12. `$prototype`
+    含义：先做一个可丢弃原型，用来验证设计、状态机、数据模型或 UI 方向。
+    适合：你想“先试试看”“做个原型”“让我玩一下”“给几版 UI 方案”。
+
+13. `$qa`
+    含义：进行交互式 QA 会话，把你口头报告的问题整理为 GitHub issue。
+    适合：你想边测试边描述 bug，并让 agent 帮你归档问题。
+
+14. `$request-refactor-plan`
+    含义：通过访谈形成详细的重构计划，并拆成小提交或 GitHub issue。
+    适合：你想规划一次风险可控、可分步实施的重构。
+
+15. `$review`
+    含义：审查从某个 commit、branch、tag 或 merge-base 以来的改动。
+    适合：你想检查分支、PR、WIP 改动是否符合项目标准和原始需求。
+    注意：Codex 自身也有默认 code review 行为；这个 skill 更强调和标准/规格对照。
+
+16. `$scaffold-exercises`
+    含义：创建练习目录结构，包括章节、题目、解答和解释材料。
+    适合：你在做课程、训练营、练习题或教学材料。
+
+17. `$setup-matt-pocock-skills`
+    含义：为这些工程类 skills 初始化项目上下文，例如 issue tracker、标签体系、领域文档布局。
+    适合：首次在某个 repo 使用 mattpocock 的工程 skills 前运行。
+
+18. `$setup-pre-commit`
+    含义：设置 Husky pre-commit hooks、lint-staged、Prettier、类型检查和测试。
+    适合：JavaScript/TypeScript 项目想在提交前自动格式化、检查和测试。
+
+19. `$tdd`
+    含义：使用红绿重构循环做测试驱动开发。
+    适合：你想 test-first 开发功能、修 bug、写集成测试，或明确要求 TDD。
+
+20. `$teach`
+    含义：在当前 workspace 上下文中教学某个概念或技能。
+    适合：你想让我边结合项目边解释框架、代码、工具链或设计思想。
+
+21. `$to-issues`
+    含义：把计划、规格或 PRD 拆成可独立领取和实施的 issue。
+    适合：你想把一个大需求拆成 GitHub issues 或任务列表。
+
+22. `$to-prd`
+    含义：把当前对话上下文整理成 PRD，并发布到项目 issue tracker。
+    适合：你想从讨论直接沉淀产品需求文档。
+
+23. `$triage`
+    含义：按状态机和角色分工来梳理、创建、分流和准备 issues。
+    适合：issue 管理、bug/feature request 分流、为后续 agent 准备任务。
+
+24. `$ubiquitous-language`
+    含义：从当前对话中提取 DDD 风格的统一语言词汇表，并标记歧义。
+    适合：你想定义领域术语、建立 glossary、统一产品和代码语言。
+
+25. `$write-a-skill`
+    含义：创建新的 agent skill，包括结构、说明、渐进式上下文和资源文件。
+    适合：你想自己写一个新的 Codex/agent skill。
+
+26. `$writing-beats`
+    含义：把素材按叙事 beats 一段段展开，由你选择下一步写作方向。
+    适合：你有写作素材，希望用探索式方式生成文章。
+
+27. `$writing-fragments`
+    含义：通过追问挖掘零散写作片段，把观点、句子、故事和半成品想法沉淀到文档。
+    适合：你还不想定结构，只想先积累写作原料。
+
+28. `$writing-shape`
+    含义：把 Markdown 原始素材逐步塑造成可发表文章。
+    适合：你有笔记、片段或粗稿，希望我帮你组织成完整文章。
+
+29. `$zoom-out`
+    含义：让我从当前局部问题抽离出来，给出更高层次的背景、架构位置或整体视角。
+    适合：你不熟悉某段代码，想知道它在整个系统中扮演什么角色。
+
+
+Codex 原生和当前插件中比较有用的 skills
+--------------------------------------
+
+1. `$openai-docs`
+   含义：查询 OpenAI / Codex 官方文档，并基于官方资料回答。
+   适合：你问 Codex、OpenAI API、模型选择、迁移、提示词升级、Responses API 等问题。
+
+2. `$skill-installer`
+   含义：从 OpenAI curated skills 或 GitHub 仓库安装 skills 到 `$CODEX_HOME\skills`。
+   适合：你想安装、列出、更新或从 GitHub 添加新的 Codex skills。
+
+3. `$skill-creator`
+   含义：指导创建或更新 Codex skill。
+   适合：你想把某个重复工作流沉淀成自己的 `SKILL.md`。
+
+4. `$plugin-creator`
+   含义：创建 Codex plugin，包括 `.codex-plugin/plugin.json`、skills、MCP、assets 等结构。
+   适合：你想把一组 skills、工具和配置打包成可安装插件。
+
+5. `$imagegen`
+   含义：生成或编辑位图图片，例如插图、纹理、sprite、mockup、透明背景素材等。
+   适合：前端、游戏、演示、图片资产生成和编辑。
+
+6. `$github`
+   含义：通过 GitHub 插件处理仓库、PR、issue、评论、标签等上下文。
+   适合：你想让我总结 PR、查看 issue、操作 GitHub 仓库或做 GitHub 工作流。
+
+7. `$github:gh-address-comments`
+   含义：处理 GitHub PR 中的 review comments、requested changes 和 inline comments。
+   适合：你想让我读取 PR 评审意见并逐条修复。
+
+8. `$github:gh-fix-ci`
+   含义：调试和修复 GitHub Actions CI 失败。
+   适合：PR 检查失败、workflow 报错、测试在 CI 里挂了。
+
+9. `$github:yeet`
+   含义：把本地改动提交、推送并创建 draft PR。
+   适合：你明确要求“commit、push、开 PR”一条龙。
+
+
+使用建议
+--------
+
+- 做功能开发：优先考虑 `$tdd`、`$prototype`、`$diagnose`。
+- 做代码库理解：优先考虑 `$zoom-out`、`$teach`、`$improve-codebase-architecture`。
+- 做需求和任务拆分：优先考虑 `$to-prd`、`$to-issues`、`$triage`。
+- 做方案压力测试：优先考虑 `$grill-me`、`$grill-with-docs`。
+- 做写作和文档：优先考虑 `$edit-article`、`$writing-fragments`、`$writing-shape`、`$writing-beats`。
+- 做 Codex 扩展：优先考虑 `$skill-installer`、`$skill-creator`、`$plugin-creator`、`$write-a-skill`。
