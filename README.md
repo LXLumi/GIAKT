@@ -29,7 +29,3 @@ python main.py assistment2017 --epochs 50
 - `src/data/interactions.py`：训练时的 NPZ 读取、掩码生成与批次拼接。
 - `src/training/`：训练与评估控制、命令行解析、统一命令说明。
 - `src/utils/`：配置、设备、指标与文件校验工具。
-
-详细文件说明、数据格式和模型流程见 [docs/project_files.md](docs/project_files.md)。
-
-参考：[作者源码](https://github.com/lilstrawberry/DiffuQKT)，本地参考快照提交 `eced96aff31804818d991dc3db92d24f3c1266a3`；论文 DOI：`10.1145/3746027.3754823`。
