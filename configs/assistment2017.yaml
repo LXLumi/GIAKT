@@ -1,0 +1,21 @@
+# ASSIST17 专属参数；未列出的模型和训练参数继承 base.yaml。
+dataset:  # 数据集标识、描述性统计和文件位置；相对路径均从项目根目录解析
+  name: assistment2017  # 数据集名称，供训练入口选择 ASSIST17 预处理适配器
+  data_dir: data/assistment17  # 数据集根目录说明；实际读写位置以 paths 中的配置为准
+  num_skills: 101  # 初步清洗数据的知识点数量，仅作统计；实际模型词表大小读取 processed/metadata.json
+  num_students: 1709  # 初步清洗数据的学生数量，仅作统计；少于最小交互数的学生仍会在后续处理中过滤
+  num_problems: 2210  # 初步清洗数据的题目数量，仅作统计；实际难度嵌入表大小读取 processed/metadata.json
+  num_multi_skill_records: 0  # 初步清洗数据的多知识点记录数；该数据每行保留一个完整知识点名称
+  paths:  # 清洗输入、顺序恢复所需原始输入与索引/划分产物路径
+    clean: data/assistment17/assistment2017_cleaned.csv  # 已有清洗五元组，作为正式预处理输入；正式预处理不覆盖该文件
+    raw: data/assistment17/assistment2017.csv  # 原始 CSV，用于从五元组匹配恢复 startTime 和 action_num
+    processed: data/assistment17/processed  # 连续索引、映射表、metadata.json 及 train/valid/test.npz 的输出目录
+preprocess:  # ASSIST17 耗时处理、顺序恢复、序列构建和学生划分设置
+  min_time_seconds: 1.0  # 最小有效作答耗时，单位秒；低于该值按 short_time_policy 处理
+  max_time_seconds: 300.0  # 作答耗时上限，单位秒；超出部分截断到该值
+  short_time_policy: drop  # 低于最小耗时的策略：drop 删除该事件；clip 将耗时提升到最小值
+  recover_chronology: true  # true 使用 startTime/action_num 排序，缺失时从原始 CSV 恢复；false 显式采用清洗文件行序
+  min_student_interactions: 3  # 清洗后学生至少需要的交互数；不足者不参与划分和序列训练，该值至少为 3
+  max_seq_len: 200  # 每个序列窗口最多包含的交互数，至少为 3；相邻长序列窗口重叠一个上下文事件
+  split_ratios: [0.64, 0.16, 0.2]  # 按学生划分训练/验证/测试，依次为 64%/16%/20%；训练与验证合占 80%，内部为 8:2
+  seed: 42  # 单独运行预处理时的划分种子；由训练入口调用预处理时会被 train.seed 覆盖

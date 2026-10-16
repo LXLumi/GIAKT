@@ -1,0 +1,18 @@
+# Python and local tooling
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+.venv/
+.idea/
+.vscode/
+.claude/
+tmp/
+tests/outputs/
+
+# Local datasets and generated experiment artifacts
+data/*/*.csv
+data/*/processed/
+experiments/*

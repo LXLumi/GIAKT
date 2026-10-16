@@ -1,0 +1,18 @@
+# ASSIST09 专属参数；未列出的模型和训练参数继承 base.yaml。
+dataset:  # 数据集标识与文件位置；相对路径均从项目根目录解析
+  name: assistment2009  # 数据集名称，供训练入口选择 ASSIST09 预处理适配器
+  data_dir: data/assistment09  # 数据集根目录说明；实际读写位置以 paths 中的配置为准
+  paths:  # 原始输入、五元组清洗输出与索引/划分产物路径
+    raw: data/assistment09/assistment2009.csv  # 完整原始 CSV，预处理只读取所需字段并保留源文件
+    clean: data/assistment09/assistment2009_cleaned.csv  # 清洗后的五元组输出，使用原始 ID 和秒数；重新处理时覆盖
+    processed: data/assistment09/processed  # 连续索引、映射表、metadata.json 及 train/valid/test.npz 的输出目录
+preprocess:  # ASSIST09 字段适配、耗时处理、序列构建和学生划分设置
+  source_encoding: latin-1  # 原始 CSV 的读取编码，兼容源文件中非 UTF-8 文本
+  min_time_seconds: 1.0  # 最小有效作答耗时，单位秒；原始 ms_first_response 先除以 1000
+  max_time_seconds: 300.0  # 作答耗时上限，单位秒；超出部分截断到该值
+  short_time_policy: drop  # 低于最小耗时的策略：drop 删除该事件；clip 将耗时提升到最小值
+  recover_chronology: true  # 必须为 true；按学生内数值 order_id 恢复顺序，ASSIST09 适配器不支持关闭
+  min_student_interactions: 3  # 清洗后学生至少需要的交互数；不足者不参与划分和序列训练，该值至少为 3
+  max_seq_len: 200  # 每个序列窗口最多包含的交互数，至少为 3；相邻长序列窗口重叠一个上下文事件
+  split_ratios: [0.64, 0.16, 0.2]  # 按学生划分训练/验证/测试的比例，依次为 64%/16%/20%；三者为正且总和为 1
+  seed: 42  # 单独运行预处理时的划分种子；由训练入口调用预处理时会被 train.seed 覆盖

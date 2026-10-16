@@ -1,0 +1,21 @@
+# F:\Postgraduate\DeepLearning\GIAKT\pyproject.toml
+
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "giakt"
+version = "0.1.0"
+requires-python = ">=3.9"
+dependencies = [
+    "torch>=2.0,<3",
+    "numpy>=1.23,<2",
+    "pandas>=1.5,<3",
+    "scikit-learn>=1.2,<2",
+    "PyYAML>=6,<7",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*", "scripts*"]
