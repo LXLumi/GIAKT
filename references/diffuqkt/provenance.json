@@ -1,0 +1,14 @@
+{
+  "repository": "https://github.com/lilstrawberry/DiffuQKT",
+  "commit": "eced96aff31804818d991dc3db92d24f3c1266a3",
+  "retrieved": "2026-10-13",
+  "files_sha256": {
+    "glo.py": "47989aa142075a901ccae1a60d6ae49eb152b3618664f9a782eefa8199bb74e8",
+    "load_data.py": "e71ce2682a53246e021b2c2634b10bce986e9bc563dd07daa84ad5c9227e5b41",
+    "main.py": "021a94aa8c87facfb792f09507bf80ea2048fdeb0e0e2ea07c9792e537f5f102",
+    "model.py": "3812f04926bc2c0cfbeba692f80299bf43d8fba9d42aca8a891473827ec7b47f",
+    "README.md": "43b691b6bb93d3ec1567a914d29a28134fb1b7e302bcd2f4d012276846b711e7",
+    "run.py": "a70522288f533263015943b04d06a161503bd79473afc0bb88aecb66e99fbbc7"
+  },
+  "paper_doi": "10.1145/3746027.3754823"
+}

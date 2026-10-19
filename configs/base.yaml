@@ -1,20 +1,16 @@
 # 公共默认配置：与数据集配置递归合并，同名参数由数据集配置及命令行覆盖。
-# 模型设置参考论文第 5.1.3 节与作者 main.py；联合损失对应论文公式 21。
-model:  # 基础 DiffuQKT 的网络结构与扩散设置
+# 模型专属默认值从 configs/models/<model_name>.yaml 加载；数据集配置与命令行优先。
+model_name: diffuqkt  # 默认模型；可用 --model linearq 切换，原有未指定模型的命令保持兼容
+model:  # 两种模型共用的知识追踪网络与对比学习设置
   embedding_dim: 128  # 嵌入维度 d；用于知识点、题目和状态向量，必须能被 num_heads 整除
   num_heads: 2  # 遗忘注意力的头数，必须为正整数
   dropout: 0.4  # 训练时 Dropout 的丢弃概率，取值范围 [0, 1)
-  diffusion_steps: 100  # 扩散总步数，至少为 2；训练随机采样时间步，评估执行全部反向步
-  beta_start: 0.0001  # 线性噪声日程的起始 beta，需满足 0 < beta_start <= beta_end < 1
-  beta_end: 0.02  # 线性噪声日程的结束 beta，控制扩散后期每步加入的噪声量
-  reverse_variance: posterior  # 反向采样方差：posterior 对应论文公式 16；fixed_large 兼容作者采样实现
   contrastive_negatives: enhanced  # 对比负样本状态来源：enhanced 为增强分支（论文公式 14）；original 为原始分支（作者实现）
-loss:  # 总损失 = KT + contrastive_weight * CL + diffusion_weight * Diff
+loss:  # 两种模型共用的 KT + contrastive_weight * CL；DiffuQKT 另外加入扩散损失
   contrastive_weight: 0.001  # 对比学习损失 CL 的非负权重；设为 0 时跳过对比损失计算
-  diffusion_weight: 0.01  # 扩散重建 MSE 的非负权重；设为 0 时该项不计入总损失
   temperature: 0.3  # 对比学习相似度的温度，必须大于 0；越小则相似度分布越尖锐
 train:  # 训练控制、设备选择和实验输出设置
-  preprocess_each_run: true  # true 表示每次训练重建数据；false 复用已有结果，缺少 metadata.json 时仍自动处理
+  preprocess_each_run: false  # true 表示每次训练重建数据；false 复用已有结果，缺少 metadata.json 时仍自动处理
   seed: 42  # 训练随机种子，控制参数初始化与批次打乱；训练入口调用预处理时也使用此种子
   epochs: 100  # 最大训练轮数；可由 --epochs 覆盖，也可能因早停提前结束
   batch_size: 64  # 每个批次的序列窗口数，必须为正整数
@@ -25,5 +21,5 @@ train:  # 训练控制、设备选择和实验输出设置
   device: auto  # 运行设备：auto 自动优先使用 CUDA，也可显式设置 cpu、cuda 或 cuda:0
   num_workers: 0  # DataLoader 数据加载子进程数；0 表示在主进程加载
   num_threads: 4  # PyTorch 执行 CPU 算子时使用的线程数
-  eval_seed: 2026  # 验证/测试反向扩散的独立采样种子，固定评估随机性
-  output_root: experiments  # 实验根目录；每次自动创建“数据集名称_最大轮数epochs_编号”子目录保存结果
+  eval_seed: 2026  # 评估独立随机种子；DiffuQKT 用于反向扩散，LinearQ 的表示计算不使用随机采样
+  output_root: experiments  # 实验根目录；按模型/数据集/实验名分组，基线目录为 diffuqk，根目录统一汇总 results.csv

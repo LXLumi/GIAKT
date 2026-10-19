@@ -1,9 +1,9 @@
-"""DiffuQKT: Rasch question embeddings, conditional diffusion and contrastive KT."""
+"""Baseline Rasch embeddings, reusable knowledge tracing and state contrastive learning."""
 import torch
 from torch import nn
 from torch.nn import functional as F
+
 from .attention import KnowledgeRetriever
-from .diffusion import ConditionalQuestionDiffusion
 
 
 def stable_state_contrastive(enhanced, original, valid, student_ids, temperature=0.3,
@@ -27,15 +27,15 @@ def stable_state_contrastive(enhanced, original, valid, student_ids, temperature
     return losses[valid.transpose(0, 1)].mean()
 
 
-class DiffuQKT(nn.Module):
-    def __init__(self, num_problems, num_skills, embedding_dim=128, num_heads=2, dropout=0.4,
-                 diffusion_steps=100, beta_start=1e-4, beta_end=0.02, reverse_variance="posterior",
-                 contrastive_negatives="enhanced", contrastive_weight=0.001,
-                 diffusion_weight=0.01, temperature=0.3):
+class QuestionKTBase(nn.Module):
+    """A model supplies q*; all subsequent prediction/contrastive operations are shared."""
+
+    def __init__(self, num_problems, num_skills, embedding_dim=128, dropout=0.4,
+                 contrastive_negatives="enhanced", contrastive_weight=0.001, temperature=0.3):
         super().__init__()
         if not 0 <= dropout < 1 or num_problems < 1 or num_skills < 1:
             raise ValueError("Invalid dropout or vocabulary sizes.")
-        if min(contrastive_weight, diffusion_weight) < 0 or temperature <= 0:
+        if contrastive_weight < 0 or temperature <= 0:
             raise ValueError("Loss weights must be nonnegative and temperature positive.")
         if contrastive_negatives not in {"enhanced", "original"}:
             raise ValueError("Unknown contrastive negative mode.")
@@ -48,13 +48,15 @@ class DiffuQKT(nn.Module):
             if embedding.padding_idx is not None:
                 with torch.no_grad():
                     embedding.weight[embedding.padding_idx].zero_()
-        self.diffusion = ConditionalQuestionDiffusion(embedding_dim, diffusion_steps, beta_start,
-                                                      beta_end, reverse_variance)
+        self.contrastive_weight = contrastive_weight
+        self.temperature, self.contrastive_negatives = temperature, contrastive_negatives
+        self.representation_loss_weights = {}
+
+    def initialize_downstream(self, embedding_dim, num_heads, dropout):
+        # Called after constructing the enhancer, preserving DiffuQKT's initialization order.
         self.retriever = KnowledgeRetriever(embedding_dim, num_heads, dropout)
         self.predictor = nn.Sequential(nn.Linear(2 * embedding_dim, embedding_dim), nn.ReLU(),
                                        nn.Dropout(dropout), nn.Linear(embedding_dim, 1))
-        self.contrastive_weight, self.diffusion_weight = contrastive_weight, diffusion_weight
-        self.temperature, self.contrastive_negatives = temperature, contrastive_negatives
 
     def embed_skills(self, embedding, skill_ids):
         """Mean all atomic skills of one event; preserve scalar ASSIST17 behavior."""
@@ -67,7 +69,7 @@ class DiffuQKT(nn.Module):
         return vectors.sum(dim=-2) / mask.sum(dim=-2).clamp_min(1)
 
     def question_components(self, batch):
-        """One representation path shared by reconstruction, contrastive KT and sampling."""
+        """Original Q = C + D*V, with the baseline sigmoid difficulty scalar D."""
         valid = batch["valid_mask"].unsqueeze(-1)
         concept = self.embed_skills(self.concept, batch["skill_ids"]) * valid
         scale = self.difficulty(batch["problem_ids"]).sigmoid() * valid
@@ -75,19 +77,17 @@ class DiffuQKT(nn.Module):
         return {"concept": concept, "variation": variation, "scale": scale, "conditioning": scale,
                 "original": (concept + scale * variation) * valid}
 
+    def enhance_questions(self, components, batch, generator=None):
+        raise NotImplementedError
+
     def forward(self, batch, generator=None):
         valid = batch["valid_mask"]
         targets = batch["prediction_mask"] & valid
         if not valid.any() or not targets.any():
             raise ValueError("Batch must contain valid events and next-answer targets.")
         components = self.question_components(batch)
-        concept, condition, original = [components[key] for key in ["concept", "conditioning", "original"]]
-        if self.training:
-            enhanced, diffusion_loss = self.diffusion.training_representation(original, concept, condition, valid)
-        else:
-            enhanced = self.diffusion.sample(concept, condition, valid, generator)
-            # Evaluation uses reverse sampling, not the training reconstruction objective.
-            diffusion_loss = None
+        original = components["original"]
+        enhanced, representation_losses = self.enhance_questions(components, batch, generator)
         answer = self.answer(batch["answers"])
         state = self.retriever(enhanced, answer, valid)
         logits = self.predictor(torch.cat([state, enhanced], dim=-1)).squeeze(-1)
@@ -99,7 +99,10 @@ class DiffuQKT(nn.Module):
                 batch["student_ids"], self.temperature, self.contrastive_negatives)
         loss = kt_loss
         if self.training:
-            loss = loss + self.contrastive_weight * contrastive_loss + self.diffusion_weight * diffusion_loss
+            loss = loss + self.contrastive_weight * contrastive_loss
+            for name, value in representation_losses.items():
+                if value is not None:
+                    loss = loss + self.representation_loss_weights[name] * value
         return {"logits": logits, "probabilities": logits.sigmoid(), "states": state,
                 "loss": loss, "kt_loss": kt_loss, "contrastive_loss": contrastive_loss,
-                "diffusion_loss": diffusion_loss}
+                "diffusion_loss": representation_losses.get("diffusion_loss")}

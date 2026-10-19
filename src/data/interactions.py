@@ -28,6 +28,12 @@ class InteractionDataset(Dataset):
     def __len__(self):
         return len(self.arrays["lengths"])
 
+    def unique_problem_ids(self):
+        """Question vocabulary in valid positions of this runtime split/scope."""
+        problems = self.arrays["problemId"]
+        valid = np.arange(problems.shape[1])[None, :] < self.arrays["lengths"][:, None]
+        return np.unique(problems[valid & (problems > 0)])
+
     def __getitem__(self, index):
         length = int(self.arrays["lengths"][index])
         mask = torch.arange(self.arrays["problemId"].shape[1]) < length

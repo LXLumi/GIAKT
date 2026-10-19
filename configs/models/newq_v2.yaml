@@ -1,0 +1,18 @@
+# NewQ V2：独立代码和余弦权重；残差扩散四模式及条件梯度对照见 docs/newq_v2.md。
+model:  # original 为 Q_sem 与 R 的融合；目标/输出由扩散开关决定，detach 仅控制独立条件梯度
+  diffusion_difficulty_condition: true  # true 将 D 用作去噪显式条件；false 将该输入置零，Q_sem 中的 D 仍正常学习；训练去噪和逆扩散一致
+  residual_diffusion_enabled: true  # true 按 role 使用 R；false 为 off（语义扩散结束后融合 R），不关闭残差或扩散
+  residual_diffusion_role: both  # condition 仅独立条件，生成语义后融合 R；target 仅完整目标、both 条件+完整目标，二者生成后不再融合 R
+  residual_condition_detach: false  # true 仅对 condition/both 的条件输入使用 R.detach()；输出/原始分支及完整重建目标仍用正常 R，off/target 下无效
+  residual_fusion: add  # add 将 Q 与 R 相加；concat 按 [Q, R] 拼接，原始和增强分支使用相同规则
+  residual_concat_keep_2d: 0  # 仅 concat 生效：true/1 保留 2d 并适配下游；false/0 用共享无偏置线性层映射回 d，初始为 [I,I]
+  attention_embedding_dim: 8  # 注意力题目代码维度 r_A，正整数；独立于残差表，不接受 bool
+  residual_embedding_dim: 8  # 残差题目代码维度 r_R，正整数；默认两张表维度之和为 16
+  attention_scale: 2.0  # 归一化 query/key 点积的固定尺度 gamma，有限正数，不参与训练
+  attention_temperature: 1.0  # 固定 softmax 温度 tau，有限正数；分数为 gamma/tau * cosine，不再除 sqrt(r_A)
+  diffusion_steps: 100  # 四模式均执行完整扩散；off/condition 重构 Q_sem，target/both 重构 Q_orig
+  beta_start: 0.0001  # 原线性日程起始 beta，满足 0 < beta_start <= beta_end < 1
+  beta_end: 0.02  # 原线性日程结束 beta，不修改终端 SNR
+  reverse_variance: posterior  # 基线采样方差：posterior 或兼容作者实现的 fixed_large
+loss:  # 保持 KT + contrastive_weight * LC + diffusion_weight * Diff，不添加独立残差或熵损失
+  diffusion_weight: 0.01  # 当前模式扩散目标的 MSE 权重；off 及 condition+detach 无残差依赖，其余按条件/目标路径传播梯度

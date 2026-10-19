@@ -1,0 +1,55 @@
+# DHA-KT 正式行为轮廓后端；参考库需先离线构建，详见 docs/dha_kt_usage.md。
+model:  # 复用基线注意力层，使用独立两遍同化 forward；不读取 NewQV2 的用户配置
+  attention_embedding_dim: 8  # 题目概念注意力代码维度 r_A，正整数
+  residual_embedding_dim: 8  # 基础自由残差代码维度 r_R，正整数
+  attention_scale: 2.0  # 余弦概念打分的固定 gamma
+  attention_temperature: 1.0  # 概念 softmax 温度 tau
+  learned_residual_enabled: true  # 是否创建基础 R 参数；false 仅支持 add，不关闭行为生成修正
+  residual_fusion: add  # add、concat；原始与全部生成候选共享融合规则/线性层
+  residual_concat_keep_2d: false  # concat 时 true/1 保留 2d；false/0 用共享无偏置投影回 d
+  generated_correction_enabled: true  # false 返回重复原始候选，作为同化退化检查
+  candidate_backend: evidence_profile  # evidence_profile 正式后端；legacy_question 为旧题目扩散对照
+  profile_injection: residual_update  # residual_update 默认残差槽；semantic_update 为语义槽实验；legacy 必须为 null
+  profile_residual_condition: none  # none、detach、trainable；控制独立基础 R 条件，legacy 必须为 none
+  legacy_residual_mode: null  # legacy 才设 off/condition/target/both；profile 后端必须为 null
+  legacy_residual_condition_detach: false  # 仅 legacy 条件梯度；profile 后端必须为 false
+  generated_candidates: 3  # 不含原始题目的生成候选数 M，正整数
+  raw_prior_mass: 0.5  # 原始候选先验质量，其余质量均分给 M 个生成候选
+  responsibility_stop_gradient: true  # 仅停止责任权重梯度，候选 payload 仍可学习
+  responsibility_temperature: 1.0  # 1 为指定混合模型的后验；其他正值为显式温度实验
+  responsibility_mode: posterior  # posterior 默认答案条件责任；prior 使用 pi 构造历史，供 r→pi 机制消融
+  surprise_input: false  # 是否向历史适配器追加 y-pilot_probability；非默认 surprise 实验
+  max_parameter_ratio: 4.0  # 完整模型相对同配置 DiffuQKT 的显式参数量上限
+  diffusion_supervision_keys_per_step: 128  # 从全训练参考键均匀无放回抽取的最大去噪监督键数
+  profile:  # 固定行为坐标/参考库；默认查找数据集下现有参考库，不自动重建或回退后端
+    artifact_path: null  # null 自动使用 <数据集目录>/dha_kt/reference；--reference-artifact 可覆盖，checkpoint 自包含 buffer
+    manifest_sha256: null  # 首次载入确定并保存；显式给定时必须匹配
+    bins: 8  # H 个固定等宽前缀预测概率分箱，须与 artifact 一致
+    fixed_scale: 4.0  # 目标固定缩放；采样恢复原坐标后再投影
+    shrinkage_kappa: 5.0  # 校准残差收缩分母 n+kappa，须与 artifact 一致
+    no_evidence_policy: raw_only  # raw_only 无 partial 证据时重复原始候选；prior_only 允许结构外推
+  diffusion:  # 正式轮廓生成器；宽度与旧题目扩散独立
+    prediction_type: x0  # 首版只实现 x0 重建
+    schedule: cosine  # cosine 默认近零终端 SNR；linear 为显式兼容对照
+    steps: 100  # 正向日程步数 T，至少 2
+    sampler: ddim  # profile 使用 ddim；legacy 使用完整 ddpm 并显式改相关配置
+    sampling_steps: 8  # 训练候选和评估候选共用的 DDIM 网格点数，不大于 T
+    ddim_eta: 0.0  # 0 为给定初始噪声下确定性 DDIM；允许 [0,1] 的按键步噪声
+    time_embedding_dim: 64  # 独立时间嵌入宽度；legacy 必须为 d
+    hidden_dim: 128  # 轮廓去噪器隐藏宽度；legacy 必须为 2d
+    beta_start: 0.0001  # linear 时的起始 beta；cosine 时不使用
+    beta_end: 0.02  # linear 时的最终 beta；cosine 时不使用
+    reverse_variance: posterior  # legacy 完整 DDPM：posterior/fixed_large；DDIM 不使用该相邻方差
+  candidate_sampling:  # 唯一键与局部随机数，不依赖 batch 顺序或 Python hash
+    seed: 2026  # 训练按键候选噪声种子；评估尊重传入 generator.initial_seed()
+    train_draw_policy: epoch_fixed  # 每 epoch 固定一个参考 condition draw
+    eval_condition_draw: 0  # 评估固定使用 partial draw=0，不改用 dense
+    train_cache: forward_only  # 参数相关候选图仅在一次 forward 内复用
+    eval_cache: checkpoint_keyed  # 固定参数快照缓存 no_grad 候选；none 关闭缓存
+  stages:  # --epochs 包括所有阶段；--smoke 显式跳过前两阶段检查 joint 流程
+    base_warmup_epochs: 5  # 原始题目/共享 KT 预热，只有 raw BCE
+    diffusion_pretrain_epochs: 5  # 只更新去噪器，使用固定参考目标
+loss:  # 正式 joint 目标：KT + pilot_weight*pilot + diffusion_weight*denoising
+  contrastive_weight: 0.0  # DHA 不使用身份 InfoNCE；非零明确报错
+  pilot_weight: 0.5  # 初步概率混合 BCE 权重
+  diffusion_weight: 0.1  # 固定轮廓或 legacy live 题目重建损失权重

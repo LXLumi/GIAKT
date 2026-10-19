@@ -1,0 +1,10 @@
+# NewQ 专属默认参数；只改变初始 Q，扩散、对比学习与预测复用 DiffuQKT。
+model:  # Q = sum_k alpha(q,k) * (C_k + D_q * V_k) + R_q
+  question_embedding_dim: 16  # 低维题目向量 e_q 的维度 r；所有输出仍为 embedding_dim，模型总参数不能超过同规模基线的 4 倍
+  attention_temperature: 1.0  # 概念 softmax 温度；打分为 e_q^T W_K C_k / (sqrt(r) * 温度)，必须为有限正数
+  diffusion_steps: 100  # 沿用基线扩散步数，至少为 2；评估执行完整逆扩散
+  beta_start: 0.0001  # 基线线性噪声日程的起始 beta，满足 0 < beta_start <= beta_end < 1
+  beta_end: 0.02  # 基线线性噪声日程的结束 beta
+  reverse_variance: posterior  # 基线逆扩散方差；posterior 为后验方差，fixed_large 兼容作者实现
+loss:  # 沿用 KT + contrastive_weight * LC + diffusion_weight * Diff
+  diffusion_weight: 0.01  # 基线扩散重建 MSE 的权重；此项保持真实扩散损失的含义

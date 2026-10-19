@@ -1,0 +1,5 @@
+# LinearQ 专属默认参数；使用 --model linearq 选择，模型本身不包含扩散网络。
+model:  # A=W_A*E_q，B=W_B*E_q，Q*=(C+A)+D*(V+B)
+  question_embedding_dim: 8  # 题目 ID 向量 E_q 的维度；null 表示跟随 embedding_dim，正整数可独立指定
+loss:  # LinearQ 总损失 = KT + contrastive_weight * LC + diffusion_weight * 训练题目等权残差
+  diffusion_weight: 0.03  # 保留当前残差权重；对完整训练题目集合按题等权，除以题目数和嵌入维度，复用原字段兼容结果记录

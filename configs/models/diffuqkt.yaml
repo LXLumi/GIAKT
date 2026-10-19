@@ -1,0 +1,8 @@
+# DiffuQKT 专属默认参数；与 base.yaml 和数据集配置合并后运行。
+model:  # 条件扩散生成增强题目表示 Q*
+  diffusion_steps: 100  # 扩散步数，至少为 2；训练随机采样时间步，评估执行全部反向步
+  beta_start: 0.0001  # 线性噪声日程的起始 beta，需满足 0 < beta_start <= beta_end < 1
+  beta_end: 0.02  # 线性噪声日程的结束 beta
+  reverse_variance: posterior  # posterior 使用后验方差；fixed_large 兼容作者采样实现
+loss:  # DiffuQKT 总损失 = KT + contrastive_weight * LC + diffusion_weight * Diff
+  diffusion_weight: 0.01  # 未加权扩散重建 MSE 的非负权重

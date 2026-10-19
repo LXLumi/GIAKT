@@ -1,4 +1,4 @@
-# ASSIST17 专属参数；未列出的模型和训练参数继承 base.yaml。
+# ASSIST17 专属参数；其余参数继承 base.yaml 与所选模型的专属默认配置。
 dataset:  # 数据集标识、描述性统计和文件位置；相对路径均从项目根目录解析
   name: assistment2017  # 数据集名称，供训练入口选择 ASSIST17 预处理适配器
   data_dir: data/assistment17  # 数据集根目录说明；实际读写位置以 paths 中的配置为准
